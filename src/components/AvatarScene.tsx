@@ -1,11 +1,17 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import { Suspense, useRef } from "react";
-import type { AvatarId, AttachmentId, AnimationId } from "../types/avatar";
+import type {
+  AvatarId,
+  AttachmentId,
+  AnimationId,
+  QualityId,
+} from "../types/avatar";
 import type { PerformanceMetrics } from "../types/performance";
 import AvatarModel from "./AvatarModel";
 import AttachmentModel from "./AttachmentModel";
 import { getAvatarConfig } from "../data/avatars";
+import { getQualitySetting } from "../data/qualitySettings";
 
 const USE_GLB_MODELS = false;
 
@@ -13,6 +19,7 @@ type AvatarSceneProps = {
   avatarId: AvatarId;
   enabledAttachments: AttachmentId[];
   animationId: AnimationId;
+  qualityId: QualityId;
   onPerformanceUpdate: (metrics: PerformanceMetrics) => void;
 };
 
@@ -52,7 +59,7 @@ function PlaceholderAttachment({ attachmentId }: PlaceholderAttachmentProps) {
           <meshStandardMaterial color="#111827" />
         </mesh>
 
-        <mesh position={[0, 0, 0]}>
+        <mesh>
           <boxGeometry args={[0.08, 0.015, 0.015]} />
           <meshStandardMaterial color="#111827" />
         </mesh>
@@ -93,13 +100,8 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
 
     groupRef.current.position.y = 0;
 
-    if (leftArmRef.current) {
-      leftArmRef.current.rotation.z = -0.25;
-    }
-
-    if (rightArmRef.current) {
-      rightArmRef.current.rotation.z = 0.25;
-    }
+    if (leftArmRef.current) leftArmRef.current.rotation.z = -0.25;
+    if (rightArmRef.current) rightArmRef.current.rotation.z = 0.25;
 
     if (animationId === "idle") {
       groupRef.current.position.y = Math.sin(t * 1.5) * 0.03;
@@ -120,7 +122,7 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, 0]}>
+    <group ref={groupRef}>
       <mesh position={[0, 1.75, 0]}>
         <sphereGeometry args={[0.28, 32, 32]} />
         <meshStandardMaterial color="#f2c6a0" />
@@ -171,9 +173,9 @@ function ScenePerformanceTracker({
   useFrame(({ gl }) => {
     frameCountRef.current++;
 
-    const currentTime = performance.now();
+    const now = performance.now();
 
-    if (currentTime - lastUpdateTimeRef.current >= 1000) {
+    if (now - lastUpdateTimeRef.current >= 1000) {
       onPerformanceUpdate({
         fps: frameCountRef.current,
         drawCalls: gl.info.render.calls,
@@ -183,7 +185,7 @@ function ScenePerformanceTracker({
       });
 
       frameCountRef.current = 0;
-      lastUpdateTimeRef.current = currentTime;
+      lastUpdateTimeRef.current = now;
     }
   });
 
@@ -194,16 +196,16 @@ export default function AvatarScene({
   avatarId,
   enabledAttachments,
   animationId,
+  qualityId,
   onPerformanceUpdate,
 }: AvatarSceneProps) {
+  const quality = getQualitySetting(qualityId);
+
   return (
     <Canvas
       camera={{ position: [0, 1.6, 4], fov: 45 }}
-      dpr={[1, 1.5]}
-      gl={{
-        antialias: true,
-        powerPreference: "high-performance",
-      }}
+      dpr={quality.dpr}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
     >
       <color attach="background" args={["#eef2f7"]} />
 
@@ -224,32 +226,26 @@ export default function AvatarScene({
         )}
       </Suspense>
 
-      {enabledAttachments.map((attachmentId) => (
-        <Suspense
-          key={attachmentId}
-          fallback={<PlaceholderAttachment attachmentId={attachmentId} />}
-        >
+      {enabledAttachments.map((id) => (
+        <Suspense key={id} fallback={<PlaceholderAttachment attachmentId={id} />}>
           {USE_GLB_MODELS ? (
-            <AttachmentModel attachmentId={attachmentId} />
+            <AttachmentModel attachmentId={id} />
           ) : (
-            <PlaceholderAttachment attachmentId={attachmentId} />
+            <PlaceholderAttachment attachmentId={id} />
           )}
         </Suspense>
       ))}
 
-      <ContactShadows
-        position={[0, -0.01, 0]}
-        opacity={0.35}
-        scale={5}
-        blur={2}
-      />
+      {quality.shadowsEnabled && (
+        <ContactShadows
+          position={[0, -0.01, 0]}
+          opacity={quality.shadowOpacity}
+          scale={5}
+          blur={quality.shadowBlur}
+        />
+      )}
 
-      <OrbitControls
-        target={[0, 1.1, 0]}
-        enablePan={false}
-        minDistance={2.5}
-        maxDistance={6}
-      />
+      <OrbitControls target={[0, 1.1, 0]} enablePan={false} minDistance={2.5} maxDistance={6} />
     </Canvas>
   );
 }
