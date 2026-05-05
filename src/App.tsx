@@ -4,8 +4,14 @@ import AvatarScene from "./components/AvatarScene";
 import { avatars } from "./data/avatars";
 import { attachments } from "./data/attachments";
 import { animations } from "./data/animations";
+import { qualitySettings } from "./data/qualitySettings";
 
-import type { AvatarId, AttachmentId, AnimationId } from "./types/avatar";
+import type { 
+  AvatarId, 
+  AttachmentId, 
+  AnimationId,
+  QualityId,
+ } from "./types/avatar";
 
 import PerformancePanel from "./components/PerformancePanel";
 import type { PerformanceMetrics } from "./types/performance";
@@ -16,6 +22,7 @@ export default function App() {
   const [avatarId, setAvatarId] = useState<AvatarId>("neutral");
   const [enabledAttachments, setEnabledAttachments] = useState<AttachmentId[]>([]);
   const [animationId, setAnimationId] = useState<AnimationId>("idle");
+  const [qualityId, setQualityId] = useState<QualityId>("medium");
 
   const toggleAttachment = (attachmentId: AttachmentId) => {
     setEnabledAttachments((current) =>
@@ -94,6 +101,21 @@ export default function App() {
             ))}
           </select>
         </section>
+
+        <section className="panel-section">
+          <h2>Quality</h2>
+
+          <select
+            value={qualityId}
+            onChange={(e) => setQualityId(e.target.value as QualityId)}
+          >
+            {qualitySettings.map((quality) => (
+              <option key={quality.id} value={quality.id}>
+                {quality.label}
+              </option>
+            ))}
+          </select>
+        </section>
       </aside>
 
       <section className="viewport">
@@ -101,6 +123,7 @@ export default function App() {
           avatarId={avatarId}
           enabledAttachments={enabledAttachments}
           animationId={animationId}
+          qualityId={qualityId}
           onPerformanceUpdate={setPerformanceMetrics}
         />
 
