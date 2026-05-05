@@ -1,4 +1,5 @@
 import "./index.css";
+import AvatarScene from "./components/AvatarSCene";
 
 export default function App() {
   return (
@@ -45,10 +46,7 @@ export default function App() {
       </aside>
 
       <section className="viewport">
-        <div className="viewport-placeholder">
-          <span>3D Avatar Viewport</span>
-          <p>three.js scene will be added here next.</p>
-        </div>
+        <AvatarScene />
 
         <div className="performance-card">
           <strong>Performance</strong>
