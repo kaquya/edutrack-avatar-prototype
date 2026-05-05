@@ -1,11 +1,21 @@
 import { useState } from "react";
 import AvatarScene from "./components/AvatarScene";
 import { avatars } from "./data/avatars";
-import type { AvatarId } from "./types/avatar";
+import { attachments } from "./data/attachments";
+import type { AvatarId, AttachmentId } from "./types/avatar";
 import "./index.css";
 
 export default function App() {
   const [avatarId, setAvatarId] = useState<AvatarId>("neutral");
+  const [enabledAttachments, setEnabledAttachments] = useState<AttachmentId[]>([]);
+
+  const toggleAttachment = (attachmentId: AttachmentId) => {
+    setEnabledAttachments((current) => 
+      current.includes(attachmentId)
+        ? current.filter((id) => id !== attachmentId)
+        : [...current, attachmentId]
+      );
+  };
 
   return (
     <main className="app">
@@ -39,9 +49,15 @@ export default function App() {
           <h2>Attachments</h2>
 
           <div className="button-group">
-            <button>Backpack</button>
-            <button>Glasses</button>
-            <button>Book</button>
+            {attachments.map((attachment) => (
+              <button
+                key={attachment.id}
+                className={enabledAttachments.includes(attachment.id) ? "active" : ""}
+                onClick={() => toggleAttachment(attachment.id)}
+              >
+                {attachment.label}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -57,7 +73,10 @@ export default function App() {
       </aside>
 
       <section className="viewport">
-        <AvatarScene avatarId={avatarId} />
+        <AvatarScene 
+          avatarId={avatarId} 
+          enabledAttachments={enabledAttachments}
+        />
 
         <div className="performance-card">
           <strong>Performance</strong>
