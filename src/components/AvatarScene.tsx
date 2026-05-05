@@ -2,12 +2,14 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import { useRef } from "react";
 import type { AvatarId, AttachmentId, AnimationId } from "../types/avatar";
+import type { PerformanceMetrics } from "../types/performance";
 import { getAvatarConfig } from "../data/avatars";
 
 type AvatarSceneProps = {
   avatarId: AvatarId;
   enabledAttachments: AttachmentId[];
   animationId: AnimationId;
+  onPerformanceUpdate: (metrics: PerformanceMetrics) => void;
 };
 
 type PlaceholderAvatarProps = {
@@ -18,6 +20,10 @@ type PlaceholderAvatarProps = {
 type PlaceholderAttachmentProps = {
   attachmentId: AttachmentId;
 };
+
+type ScenePerformanceTrackerProps = {
+    onPerformanceUpdate: (metrics: PerformanceMetrics) => void;
+}
 
 function PlaceholderAttachment({ attachmentId }: PlaceholderAttachmentProps) {
   if (attachmentId === "backpack") {
@@ -160,10 +166,39 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
   );
 }
 
+function ScenePerformanceTracker({
+  onPerformanceUpdate,
+}: ScenePerformanceTrackerProps) {
+  const frameCountRef = useRef(0);
+  const lastUpdateTimeRef = useRef(performance.now());
+
+  useFrame(({ gl }) => {
+    frameCountRef.current++;
+
+    const currentTime = performance.now();
+
+    if (currentTime - lastUpdateTimeRef.current >= 1000) {
+      onPerformanceUpdate({
+        fps: frameCountRef.current,
+        drawCalls: gl.info.render.calls,
+        triangles: gl.info.render.triangles,
+        geometries: gl.info.memory.geometries,
+        textures: gl.info.memory.textures,
+      });
+
+      frameCountRef.current = 0;
+      lastUpdateTimeRef.current = currentTime;
+    }
+  });
+
+  return null;
+}
+
 export default function AvatarScene({
   avatarId,
   enabledAttachments,
   animationId,
+  onPerformanceUpdate,
 }: AvatarSceneProps) {
   return (
     <Canvas
@@ -175,6 +210,8 @@ export default function AvatarScene({
       }}
     >
       <color attach="background" args={["#eef2f7"]} />
+
+      <ScenePerformanceTracker onPerformanceUpdate={(onPerformanceUpdate)} />
 
       <ambientLight intensity={1.1} />
       <directionalLight position={[3, 5, 3]} intensity={2} />

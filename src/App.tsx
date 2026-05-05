@@ -7,6 +7,9 @@ import { animations } from "./data/animations";
 
 import type { AvatarId, AttachmentId, AnimationId } from "./types/avatar";
 
+import PerformancePanel from "./components/PerformancePanel";
+import type { PerformanceMetrics } from "./types/performance";
+
 import "./index.css";
 
 export default function App() {
@@ -21,6 +24,17 @@ export default function App() {
         : [...current, attachmentId]
     );
   };
+
+  const initialPerformanceMetrics: PerformanceMetrics = {
+    fps: 0,
+    drawCalls: 0,
+    triangles: 0,
+    geometries: 0,
+    textures: 0,
+  };
+
+  const [performanceMetrics, setPerformanceMetrics] =
+    useState<PerformanceMetrics>(initialPerformanceMetrics);
 
   return (
     <main className="app">
@@ -87,12 +101,10 @@ export default function App() {
           avatarId={avatarId}
           enabledAttachments={enabledAttachments}
           animationId={animationId}
+          onPerformanceUpdate={setPerformanceMetrics}
         />
 
-        <div className="performance-card">
-          <strong>Performance</strong>
-          <span>FPS: --</span>
-        </div>
+        <PerformancePanel metrics={performanceMetrics} />
       </section>
     </main>
   );
