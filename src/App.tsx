@@ -1,20 +1,25 @@
 import { useState } from "react";
 import AvatarScene from "./components/AvatarScene";
+
 import { avatars } from "./data/avatars";
 import { attachments } from "./data/attachments";
-import type { AvatarId, AttachmentId } from "./types/avatar";
+import { animations } from "./data/animations";
+
+import type { AvatarId, AttachmentId, AnimationId } from "./types/avatar";
+
 import "./index.css";
 
 export default function App() {
   const [avatarId, setAvatarId] = useState<AvatarId>("neutral");
   const [enabledAttachments, setEnabledAttachments] = useState<AttachmentId[]>([]);
+  const [animationId, setAnimationId] = useState<AnimationId>("idle");
 
   const toggleAttachment = (attachmentId: AttachmentId) => {
-    setEnabledAttachments((current) => 
+    setEnabledAttachments((current) =>
       current.includes(attachmentId)
         ? current.filter((id) => id !== attachmentId)
         : [...current, attachmentId]
-      );
+    );
   };
 
   return (
@@ -64,18 +69,24 @@ export default function App() {
         <section className="panel-section">
           <h2>Animation</h2>
 
-          <select>
-            <option>Idle</option>
-            <option>Wave</option>
-            <option>Walk</option>
+          <select
+            value={animationId}
+            onChange={(e) => setAnimationId(e.target.value as AnimationId)}
+          >
+            {animations.map((anim) => (
+              <option key={anim.id} value={anim.id}>
+                {anim.label}
+              </option>
+            ))}
           </select>
         </section>
       </aside>
 
       <section className="viewport">
-        <AvatarScene 
-          avatarId={avatarId} 
+        <AvatarScene
+          avatarId={avatarId}
           enabledAttachments={enabledAttachments}
+          animationId={animationId}
         />
 
         <div className="performance-card">
