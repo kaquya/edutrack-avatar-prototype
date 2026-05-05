@@ -1,9 +1,13 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
 import type { AvatarId, AttachmentId, AnimationId } from "../types/avatar";
 import type { PerformanceMetrics } from "../types/performance";
+import AvatarModel from "./AvatarModel";
+import AttachmentModel from "./AttachmentModel";
 import { getAvatarConfig } from "../data/avatars";
+
+const USE_GLB_MODELS = false;
 
 type AvatarSceneProps = {
   avatarId: AvatarId;
@@ -22,8 +26,8 @@ type PlaceholderAttachmentProps = {
 };
 
 type ScenePerformanceTrackerProps = {
-    onPerformanceUpdate: (metrics: PerformanceMetrics) => void;
-}
+  onPerformanceUpdate: (metrics: PerformanceMetrics) => void;
+};
 
 function PlaceholderAttachment({ attachmentId }: PlaceholderAttachmentProps) {
   if (attachmentId === "backpack") {
@@ -110,28 +114,23 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
       }
     }
 
-    if (animationId === "wave") {
-      if (rightArmRef.current) {
-        rightArmRef.current.rotation.z = 0.9 + Math.sin(t * 5) * 0.45;
-      }
+    if (animationId === "wave" && rightArmRef.current) {
+      rightArmRef.current.rotation.z = 0.9 + Math.sin(t * 5) * 0.45;
     }
   });
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
-      {/* head */}
       <mesh position={[0, 1.75, 0]}>
         <sphereGeometry args={[0.28, 32, 32]} />
         <meshStandardMaterial color="#f2c6a0" />
       </mesh>
 
-      {/* body */}
       <mesh position={[0, 1.1, 0]} scale={avatar.bodyScale}>
         <capsuleGeometry args={[0.32, 0.7, 8, 16]} />
         <meshStandardMaterial color={avatar.bodyColor} />
       </mesh>
 
-      {/* left arm */}
       <mesh
         ref={leftArmRef}
         position={[-avatar.shoulderWidth, 1.12, 0]}
@@ -141,7 +140,6 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
         <meshStandardMaterial color="#f2c6a0" />
       </mesh>
 
-      {/* right arm */}
       <mesh
         ref={rightArmRef}
         position={[avatar.shoulderWidth, 1.12, 0]}
@@ -151,13 +149,11 @@ function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
         <meshStandardMaterial color="#f2c6a0" />
       </mesh>
 
-      {/* left leg */}
       <mesh position={[-0.15, 0.45, 0]}>
         <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
         <meshStandardMaterial color={avatar.legColor} />
       </mesh>
 
-      {/* right leg */}
       <mesh position={[0.15, 0.45, 0]}>
         <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
         <meshStandardMaterial color={avatar.legColor} />
@@ -211,15 +207,34 @@ export default function AvatarScene({
     >
       <color attach="background" args={["#eef2f7"]} />
 
-      <ScenePerformanceTracker onPerformanceUpdate={(onPerformanceUpdate)} />
+      <ScenePerformanceTracker onPerformanceUpdate={onPerformanceUpdate} />
 
       <ambientLight intensity={1.1} />
       <directionalLight position={[3, 5, 3]} intensity={2} />
 
-      <PlaceholderAvatar avatarId={avatarId} animationId={animationId} />
+      <Suspense
+        fallback={
+          <PlaceholderAvatar avatarId={avatarId} animationId={animationId} />
+        }
+      >
+        {USE_GLB_MODELS ? (
+          <AvatarModel avatarId={avatarId} />
+        ) : (
+          <PlaceholderAvatar avatarId={avatarId} animationId={animationId} />
+        )}
+      </Suspense>
 
       {enabledAttachments.map((attachmentId) => (
-        <PlaceholderAttachment key={attachmentId} attachmentId={attachmentId} />
+        <Suspense
+          key={attachmentId}
+          fallback={<PlaceholderAttachment attachmentId={attachmentId} />}
+        >
+          {USE_GLB_MODELS ? (
+            <AttachmentModel attachmentId={attachmentId} />
+          ) : (
+            <PlaceholderAttachment attachmentId={attachmentId} />
+          )}
+        </Suspense>
       ))}
 
       <ContactShadows
