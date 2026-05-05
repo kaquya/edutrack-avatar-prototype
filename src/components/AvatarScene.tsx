@@ -1,161 +1,203 @@
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { ContactShadows, OrbitControls } from "@react-three/drei";
-import type { AvatarId, AttachmentId } from "../types/avatar";
+import { useRef } from "react";
+import type { AvatarId, AttachmentId, AnimationId } from "../types/avatar";
 import { getAvatarConfig } from "../data/avatars";
 
 type AvatarSceneProps = {
-    avatarId: AvatarId;
-    enabledAttachments: AttachmentId[];
+  avatarId: AvatarId;
+  enabledAttachments: AttachmentId[];
+  animationId: AnimationId;
 };
 
 type PlaceholderAvatarProps = {
-    avatarId: AvatarId;
+  avatarId: AvatarId;
+  animationId: AnimationId;
 };
 
 type PlaceholderAttachmentProps = {
-    attachmentId: AttachmentId;
-}
+  attachmentId: AttachmentId;
+};
 
 function PlaceholderAttachment({ attachmentId }: PlaceholderAttachmentProps) {
-    if (attachmentId === "backpack") {
-        return (
-            <mesh position={[0, 1.1, -0.28]} scale={[0.7, 0.9, 0.22]}>
-                <boxGeometry args={[0.7, 0.8, 0.25]} />
-                <meshStandardMaterial color="#334155" />
-            </mesh>
-        );
-    }
+  if (attachmentId === "backpack") {
+    return (
+      <mesh position={[0, 1.1, -0.28]} scale={[0.7, 0.9, 0.22]}>
+        <boxGeometry args={[0.7, 0.8, 0.25]} />
+        <meshStandardMaterial color="#334155" />
+      </mesh>
+    );
+  }
 
-    if (attachmentId === "glasses") {
-        return (
-            <group position={[0, 1.77, 0.25]}>
-                <mesh position={[-0.11, 0, 0]}>
-                    <torusGeometry args={[0.085, 0.012, 8, 24]} />
-                    <meshStandardMaterial color="#111827" />
-                </mesh>
+  if (attachmentId === "glasses") {
+    return (
+      <group position={[0, 1.77, 0.25]}>
+        <mesh position={[-0.11, 0, 0]}>
+          <torusGeometry args={[0.085, 0.012, 8, 24]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
 
-                <mesh position={[0.11, 0, 0]}>
-                    <torusGeometry args={[0.085, 0.012, 8, 24]} />
-                    <meshStandardMaterial color="#111827" />
-                </mesh>
+        <mesh position={[0.11, 0, 0]}>
+          <torusGeometry args={[0.085, 0.012, 8, 24]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
 
-                <mesh position={[0, 0, 0]}>
-                    <boxGeometry args={[0.08, 0.015, 0.015]} />
-                    <meshStandardMaterial color="#111827" />
-                </mesh>
-            </group>
-        );
-    }
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.08, 0.015, 0.015]} />
+          <meshStandardMaterial color="#111827" />
+        </mesh>
+      </group>
+    );
+  }
 
-    if (attachmentId === "book") {
-        return (
-            <group position={[0.5, 0.95, 0.18]} rotation={[0.25, 0, -0.25]}>
-                <mesh scale={[0.28, 0.38, 0.06]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial color="#dc2626" />
-                </mesh>
+  if (attachmentId === "book") {
+    return (
+      <group position={[0.5, 0.95, 0.18]} rotation={[0.25, 0, -0.25]}>
+        <mesh scale={[0.28, 0.38, 0.06]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#dc2626" />
+        </mesh>
 
-                <mesh position={[0, 0, 0.04]} scale={[0.23, 0.32, 0.025]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial color="#f8fafc" />
-                </mesh>
-            </group>
-        );
-    }
+        <mesh position={[0, 0, 0.04]} scale={[0.23, 0.32, 0.025]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#f8fafc" />
+        </mesh>
+      </group>
+    );
+  }
 
-    return null;
+  return null;
 }
 
-function PlaceholderAvatar({ avatarId }: PlaceholderAvatarProps) {
-    const avatar = getAvatarConfig(avatarId);
+function PlaceholderAvatar({ avatarId, animationId }: PlaceholderAvatarProps) {
+  const avatar = getAvatarConfig(avatarId);
 
-    return (
-        <group position={[0, 0, 0]}>
-            {/* head */}
-            <mesh position={[0, 1.75, 0]}>
-                <sphereGeometry args={[0.28, 32, 32]} />
-                <meshStandardMaterial color="#f2c6a0" />
-            </mesh>
+  const groupRef = useRef<any>(null);
+  const leftArmRef = useRef<any>(null);
+  const rightArmRef = useRef<any>(null);
 
-            {/* body */}
-            <mesh position={[0, 1.1, 0]} scale={avatar.bodyScale}>
-                <capsuleGeometry args={[0.32, 0.7, 8, 16]} />
-                <meshStandardMaterial color={avatar.bodyColor} />
-            </mesh>
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
 
-            {/* left arm */}
-            <mesh
-                position={[-avatar.shoulderWidth, 1.12, 0]}
-                rotation={[0, 0, -0.25]}
-            >
-                <capsuleGeometry args={[0.09, 0.55, 8, 12]} />
-                <meshStandardMaterial color="#f2c6a0" />
-            </mesh>
+    if (!groupRef.current) return;
 
-            {/* right arm */}
-            <mesh
-                position={[avatar.shoulderWidth, 1.12, 0]}
-                rotation={[0, 0, 0.25]}
-            >
-                <capsuleGeometry args={[0.09, 0.55, 8, 12]} />
-                <meshStandardMaterial color="#f2c6a0" />
-            </mesh>
+    groupRef.current.position.y = 0;
 
-            {/* left leg */}
-            <mesh position={[-0.15, 0.45, 0]}>
-                <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
-                <meshStandardMaterial color={avatar.legColor} />
-            </mesh>
+    if (leftArmRef.current) {
+      leftArmRef.current.rotation.z = -0.25;
+    }
 
-            {/* right leg */}
-            <mesh position={[0.15, 0.45, 0]}>
-                <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
-                <meshStandardMaterial color={avatar.legColor} />
-            </mesh>
-        </group>
-    );
+    if (rightArmRef.current) {
+      rightArmRef.current.rotation.z = 0.25;
+    }
+
+    if (animationId === "idle") {
+      groupRef.current.position.y = Math.sin(t * 1.5) * 0.03;
+    }
+
+    if (animationId === "walk") {
+      groupRef.current.position.y = Math.abs(Math.sin(t * 3)) * 0.05;
+
+      if (leftArmRef.current && rightArmRef.current) {
+        leftArmRef.current.rotation.z = -0.25 + Math.sin(t * 3) * 0.5;
+        rightArmRef.current.rotation.z = 0.25 - Math.sin(t * 3) * 0.5;
+      }
+    }
+
+    if (animationId === "wave") {
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.z = 0.9 + Math.sin(t * 5) * 0.45;
+      }
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, 0, 0]}>
+      {/* head */}
+      <mesh position={[0, 1.75, 0]}>
+        <sphereGeometry args={[0.28, 32, 32]} />
+        <meshStandardMaterial color="#f2c6a0" />
+      </mesh>
+
+      {/* body */}
+      <mesh position={[0, 1.1, 0]} scale={avatar.bodyScale}>
+        <capsuleGeometry args={[0.32, 0.7, 8, 16]} />
+        <meshStandardMaterial color={avatar.bodyColor} />
+      </mesh>
+
+      {/* left arm */}
+      <mesh
+        ref={leftArmRef}
+        position={[-avatar.shoulderWidth, 1.12, 0]}
+        rotation={[0, 0, -0.25]}
+      >
+        <capsuleGeometry args={[0.09, 0.55, 8, 12]} />
+        <meshStandardMaterial color="#f2c6a0" />
+      </mesh>
+
+      {/* right arm */}
+      <mesh
+        ref={rightArmRef}
+        position={[avatar.shoulderWidth, 1.12, 0]}
+        rotation={[0, 0, 0.25]}
+      >
+        <capsuleGeometry args={[0.09, 0.55, 8, 12]} />
+        <meshStandardMaterial color="#f2c6a0" />
+      </mesh>
+
+      {/* left leg */}
+      <mesh position={[-0.15, 0.45, 0]}>
+        <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
+        <meshStandardMaterial color={avatar.legColor} />
+      </mesh>
+
+      {/* right leg */}
+      <mesh position={[0.15, 0.45, 0]}>
+        <capsuleGeometry args={[0.1, 0.65, 8, 12]} />
+        <meshStandardMaterial color={avatar.legColor} />
+      </mesh>
+    </group>
+  );
 }
 
 export default function AvatarScene({
-    avatarId,
-    enabledAttachments
+  avatarId,
+  enabledAttachments,
+  animationId,
 }: AvatarSceneProps) {
-    return (
-        <Canvas
-            camera={{ position: [0, 1.6, 4], fov: 45 }}
-            dpr={[1, 1.5]}
-            gl={{
-                antialias: true,
-                powerPreference: "high-performance",
-            }}
-        >
-            <color attach="background" args={["#eef2f7"]} />
+  return (
+    <Canvas
+      camera={{ position: [0, 1.6, 4], fov: 45 }}
+      dpr={[1, 1.5]}
+      gl={{
+        antialias: true,
+        powerPreference: "high-performance",
+      }}
+    >
+      <color attach="background" args={["#eef2f7"]} />
 
-            <ambientLight intensity={1.1} />
-            <directionalLight position={[3, 5, 3]} intensity={2} />
+      <ambientLight intensity={1.1} />
+      <directionalLight position={[3, 5, 3]} intensity={2} />
 
-            <PlaceholderAvatar avatarId={avatarId} />
+      <PlaceholderAvatar avatarId={avatarId} animationId={animationId} />
 
-            {enabledAttachments.map((attachmentId) => (
-                <PlaceholderAttachment
-                    key={attachmentId}
-                    attachmentId={attachmentId}
-                />
-            ))}
+      {enabledAttachments.map((attachmentId) => (
+        <PlaceholderAttachment key={attachmentId} attachmentId={attachmentId} />
+      ))}
 
-            <ContactShadows
-                position={[0, -0.01, 0]}
-                opacity={0.35}
-                scale={5}
-                blur={2}
-            />
+      <ContactShadows
+        position={[0, -0.01, 0]}
+        opacity={0.35}
+        scale={5}
+        blur={2}
+      />
 
-            <OrbitControls
-                target={[0, 1.1, 0]}
-                enablePan={false}
-                minDistance={2.5}
-                maxDistance={6}
-            />
-        </Canvas>
-    );
+      <OrbitControls
+        target={[0, 1.1, 0]}
+        enablePan={false}
+        minDistance={2.5}
+        maxDistance={6}
+      />
+    </Canvas>
+  );
 }
