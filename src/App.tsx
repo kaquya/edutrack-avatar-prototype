@@ -1,5 +1,5 @@
 import "./index.css";
-import AvatarScene from "./components/AvatarSCene";
+import AvatarScene from "./components/AvatarScene";
 
 export default function App() {
   return (
