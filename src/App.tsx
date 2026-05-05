@@ -1,7 +1,12 @@
-import "./index.css";
+import { useState } from "react";
 import AvatarScene from "./components/AvatarScene";
+import { avatars } from "./data/avatars";
+import type { AvatarId } from "./types/avatar";
+import "./index.css";
 
 export default function App() {
+  const [avatarId, setAvatarId] = useState<AvatarId>("neutral");
+
   return (
     <main className="app">
       <aside className="sidebar">
@@ -18,9 +23,15 @@ export default function App() {
           <h2>Avatar</h2>
 
           <div className="button-group">
-            <button className="active">Neutral</button>
-            <button>Male</button>
-            <button>Female</button>
+            {avatars.map((avatar) => (
+              <button
+                key={avatar.id}
+                className={avatarId === avatar.id ? "active" : ""}
+                onClick={() => setAvatarId(avatar.id)}
+              >
+                {avatar.label}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -46,7 +57,7 @@ export default function App() {
       </aside>
 
       <section className="viewport">
-        <AvatarScene />
+        <AvatarScene avatarId={avatarId} />
 
         <div className="performance-card">
           <strong>Performance</strong>
