@@ -1,0 +1,1 @@
+export type AvatarId = "neutral" | "male" | "female";
