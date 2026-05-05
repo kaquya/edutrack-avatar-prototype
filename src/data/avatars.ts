@@ -7,6 +7,7 @@ export type AvatarConfig = {
     legColor: string;
     shoulderWidth: number;
     bodyScale: [number, number, number];
+    modelPath?: string;
 };
 
 export const avatars: AvatarConfig[] = [
@@ -17,6 +18,7 @@ export const avatars: AvatarConfig[] = [
         legColor: "#111827",
         shoulderWidth: 0.42,
         bodyScale: [1, 1, 1],
+        modelPath: "/models/avatars/neutral.glb",
     },
     {
         id: "male",
@@ -25,6 +27,7 @@ export const avatars: AvatarConfig[] = [
         legColor: "#1f2937",
         shoulderWidth: 0.48,
         bodyScale: [1.08, 1, 1],
+        modelPath: "/models/avatars/male.glb",
     },
     {
         id: "female",
@@ -33,6 +36,7 @@ export const avatars: AvatarConfig[] = [
         legColor: "#374151",
         shoulderWidth: 0.38,
         bodyScale: [0.92, 1.02, 1],
+        modelPath: "/models/avatars/female.glb",
     },
 ];
 
